@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Distributed Search Typeahead & Hashing Visualizer</title>
+  <!-- Google Fonts: Outfit (headings) & Inter (UI text) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="background-radial-glow"></div>
+  
+  <div class="app-container">
+    <header class="app-header">
+      <div class="logo-area">
+        <span class="pulse-dot"></span>
+        <h1>Search Typeahead System</h1>
+      </div>
+      <p class="subtitle">Distributed Consistent Hashing Cache &amp; Batch Write Engine</p>
+    </header>
+
+    <div class="main-grid">
+      <!-- LEFT COLUMN: SEARCH INTERFACE -->
+      <section class="panel-column search-column">
+        <!-- Search Engine Box Card -->
+        <div class="glass-card main-search-card">
+          <div class="card-header">
+            <h2>Search Engine</h2>
+            <div class="toggle-container">
+              <span class="toggle-label">Trending Mode</span>
+              <label class="switch">
+                <input type="checkbox" id="ranking-mode-toggle">
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+          
+          <div class="search-box-wrapper">
+            <div class="search-input-container">
+              <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input type="text" id="search-input" placeholder="Type query here..." autocomplete="off" aria-label="Search Input">
+              <button id="clear-btn" class="clear-btn hidden">&times;</button>
+              <button id="search-btn" class="search-btn">Search</button>
+            </div>
+            
+            <!-- Dynamic Suggestions Dropdown -->
+            <ul id="suggestions-list" class="suggestions-dropdown hidden" role="listbox">
+              <!-- Dynamically populated suggestions -->
+            </ul>
+          </div>
+          
+          <div class="search-tip">
+            <span class="tip-badge">Tip</span>
+            <p>Type queries like <strong>"iphone"</strong>, <strong>"flights"</strong>, or press arrows to navigate suggestions. Press <strong>Enter</strong> to submit.</p>
+          </div>
+        </div>
+
+        <!-- Submission Status Card -->
+        <div class="glass-card status-card">
+          <h3>Submission Log</h3>
+          <div id="search-log" class="search-log">
+            <div class="empty-log-message">No searches submitted yet. Submit a search to see the batching mechanism activate.</div>
+          </div>
+        </div>
+
+        <!-- Trending Now Card -->
+        <div class="glass-card trending-card">
+          <h3>Trending Searches (Sliding Window)</h3>
+          <div id="trending-list" class="trending-list">
+            <div class="empty-trending">No trending searches yet. Submit searches repeatedly to make queries trend!</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT COLUMN: MONITORING DASHBOARD -->
+      <section class="panel-column dashboard-column">
+        <!-- Live Metrics Grid -->
+        <div class="metrics-grid">
+          <!-- Latency Card -->
+          <div class="glass-card metric-card">
+            <div class="metric-icon latency-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div class="metric-info">
+              <span class="metric-label">Latency (p95)</span>
+              <h3 id="metric-latency-p95">0.00 ms</h3>
+              <span id="metric-latency-avg" class="metric-subtext">Avg: 0.00 ms | p99: 0.00 ms</span>
+            </div>
+          </div>
+
+          <!-- Hit Rate Card -->
+          <div class="glass-card metric-card">
+            <div class="metric-icon cache-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+              </svg>
+            </div>
+            <div class="metric-info">
+              <span class="metric-label">Cache Hit Rate</span>
+              <h3 id="metric-hit-rate">0.0%</h3>
+              <span id="metric-hit-miss-ratio" class="metric-subtext">Hits: 0 | Misses: 0</span>
+            </div>
+          </div>
+
+          <!-- Writes Saved Card -->
+          <div class="glass-card metric-card">
+            <div class="metric-icon db-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+              </svg>
+            </div>
+            <div class="metric-info">
+              <span class="metric-label">Writes Saved</span>
+              <h3 id="metric-writes-saved">0</h3>
+              <span id="metric-writes-reduction" class="metric-subtext">0.0% write reduction</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hashing Ring Visualization -->
+        <div class="glass-card visualizer-card">
+          <div class="card-header">
+            <h3>Consistent Hashing Ring</h3>
+            <span class="hashing-node-count">4 Nodes (128 V-Nodes)</span>
+          </div>
+          <div class="visualizer-container">
+            <canvas id="ring-canvas" width="360" height="360"></canvas>
+            <div class="ring-overlay">
+              <div id="routing-debug-info" class="routing-debug-info">
+                Hover or type a prefix to see routing
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Simulation and Server Node Stats -->
+        <div class="grid-2-cols">
+          <!-- Simulation Panel -->
+          <div class="glass-card controls-card">
+            <h3>Simulation Engine</h3>
+            <p class="control-description">Generate traffic to test distributed caching routing and batch writes.</p>
+            <div class="btn-group">
+              <button id="btn-simulate-normal" class="btn btn-secondary">Simulate 100 Random Searches</button>
+              <button id="btn-simulate-trending" class="btn btn-accent">Simulate 100 Trending Searches</button>
+            </div>
+            <div id="simulation-status" class="simulation-status">Simulation idle</div>
+          </div>
+
+          <!-- Cache Node Details -->
+          <div class="glass-card nodes-card">
+            <div class="card-header" style="margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; width: 100%;">
+              <h3>Logical Cache Nodes</h3>
+              <button id="btn-flush-caches" class="btn btn-secondary" style="font-size: 0.72rem; padding: 0.35rem 0.75rem; border-radius: 6px; margin: 0; line-height: 1;">Flush Caches</button>
+            </div>
+            <div id="nodes-list" class="nodes-list">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
